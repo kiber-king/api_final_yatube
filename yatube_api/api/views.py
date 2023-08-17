@@ -1,59 +1,70 @@
 from django.shortcuts import get_object_or_404
-from posts.models import Group, Post, User
-from rest_framework import filters, status, viewsets
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
+
+from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
-from .permissions import IsOwnerOrReadOnly
-from .serializers import (
-    CommentSerializer, FollowSerializer, GroupSerializer, PostSerializer)
+from posts.models import Group, Post
+
+from .permissions import IsCreatorOrReadOnly
+from .serializers import (CommentSerializers, FollowSerializers,
+                          GroupSerializers, PostSerializers)
 
 
 class PostViewSet(viewsets.ModelViewSet):
+    """CRUD для постов."""
+
     queryset = Post.objects.all()
-    serializer_class = PostSerializer
-    permission_classes = (IsOwnerOrReadOnly,)
+    serializer_class = PostSerializers
     pagination_class = LimitOffsetPagination
+    permission_classes = (IsCreatorOrReadOnly,)
 
     def perform_create(self, serializer):
+        """Функция для создания поста."""
         serializer.save(author=self.request.user)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    serializer_class = CommentSerializer
-    permission_classes = (IsOwnerOrReadOnly,)
+    """CRUD для комментариев."""
 
-    def perform_create(self, serializer):
-        """Функция для создания комментриев."""
-        post = get_object_or_404(Post, pk=self.kwargs.get("post_id"))
-        serializer.save(author=self.request.user, post=post)
+    serializer_class = CommentSerializers
+    permission_classes = (IsCreatorOrReadOnly,)
 
     def get_queryset(self):
         """Функция для получения комментариев заданного поста."""
         post = get_object_or_404(Post, pk=self.kwargs.get("post_id"))
         return post.comments.all()
 
-
-class GroupViewSet(viewsets.ModelViewSet):
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
-    permission_classes = (AllowAny,)
-
-    def create(self, request):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    def perform_create(self, serializer):
+        """Функция для создания комментриев."""
+        post = get_object_or_404(Post, pk=self.kwargs.get("post_id"))
+        serializer.save(author=self.request.user, post=post)
 
 
-class FollowViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'post']
-    permission_classes = (IsAuthenticated,)
-    serializer_class = FollowSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['user__username', 'following__username']
+class FollowersViewSet(
+    viewsets.ModelViewSet, mixins.CreateModelMixin, mixins.ListModelMixin
+):
+    """
+    Вьюсет для показа всех подписок пользователя, который отправил запрос,
+    и для оформления подписок.
+    """
+
+    serializer_class = FollowSerializers
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ("following__username",)
 
     def get_queryset(self):
-        user = get_object_or_404(User, username=self.request.user.username)
+        """Функция для получения подписок пользователя, совершившего запрос."""
+        user = self.request.user
         return user.follower.all()
 
     def perform_create(self, serializer):
+        """Функция для оформления подписки."""
         serializer.save(user=self.request.user)
+
+
+class GroupViewSet( viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для показа всех доступных групп."""
+
+    serializer_class = GroupSerializers
+    queryset = Group.objects.all()
+    permission_classes = (IsCreatorOrReadOnly,)

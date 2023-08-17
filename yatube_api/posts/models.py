@@ -5,6 +5,7 @@ User = get_user_model()
 
 
 class Group(models.Model):
+    """Модель для групп."""
     title = models.CharField(max_length=200, verbose_name='Заголовок')
     slug = models.SlugField(unique=True, verbose_name='Слаг')
     description = models.TextField(verbose_name='Описание')
@@ -18,6 +19,7 @@ class Group(models.Model):
 
 
 class Post(models.Model):
+    """Модель для постов."""
     text = models.TextField(verbose_name='Текст поста',
                             help_text='Текст нового поста')
     pub_date = models.DateTimeField(auto_now_add=True,
@@ -38,7 +40,6 @@ class Post(models.Model):
         null=True)
 
     class Meta:
-        ordering = ['-pub_date']
         default_related_name = 'posts'
         verbose_name = 'Пост'
         verbose_name_plural = 'Посты'
@@ -48,6 +49,7 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
+    """Модель для комментариев."""
     post = models.ForeignKey(Post,
                              blank=True,
                              null=True,
@@ -71,6 +73,7 @@ class Comment(models.Model):
 
 
 class Follow(models.Model):
+    """Модель для подписчиков и подписок."""
     user = models.ForeignKey(User,
                              on_delete=models.CASCADE,
                              null=True,
