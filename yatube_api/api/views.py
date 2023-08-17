@@ -25,11 +25,13 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsOwnerOrReadOnly,)
 
     def perform_create(self, serializer):
-        get_object_or_404(Post, pk=self.kwargs.get('post_id'))
-        serializer.save(author=self.request.user)
+        """Функция для создания комментриев."""
+        post = get_object_or_404(Post, pk=self.kwargs.get("post_id"))
+        serializer.save(author=self.request.user, post=post)
 
     def get_queryset(self):
-        post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
+        """Функция для получения комментариев заданного поста."""
+        post = get_object_or_404(Post, pk=self.kwargs.get("post_id"))
         return post.comments.all()
 
 
