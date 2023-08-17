@@ -57,7 +57,8 @@ class Comment(models.Model):
                                on_delete=models.CASCADE,
                                verbose_name='Автор')
     text = models.TextField(verbose_name='Текст комментария')
-    created = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
+    created = models.DateTimeField(auto_now_add=True, db_index=True,
+                                   verbose_name='Создан')
 
     class Meta:
         default_related_name = 'comments'
@@ -86,10 +87,7 @@ class Follow(models.Model):
                                   )
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'following'],
-                                    name='unique_user_subscribers')
-        ]
+        unique_together = [['user', 'following']]
 
     def __str__(self):
         return '{} follows {}'.format(self.user, self.following)
