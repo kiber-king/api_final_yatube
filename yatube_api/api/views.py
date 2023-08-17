@@ -62,7 +62,7 @@ class FollowersViewSet(
         serializer.save(user=self.request.user)
 
 
-class GroupViewSet( viewsets.ReadOnlyModelViewSet):
+class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для показа всех доступных групп."""
 
     serializer_class = GroupSerializers
