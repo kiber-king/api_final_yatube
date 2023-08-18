@@ -1,7 +1,8 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, viewsets
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import IsAuthenticated
 
 from posts.models import Group, Post
 
@@ -40,17 +41,16 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, post=post)
 
 
-class FollowersViewSet(
-    viewsets.ModelViewSet, mixins.CreateModelMixin, mixins.ListModelMixin
-):
+class FollowersViewSet(viewsets.ModelViewSet):
     """
     Вьюсет для показа всех подписок пользователя, который отправил запрос,
     и для оформления подписок.
     """
-
+    http_method_names = ['get', 'post']
     serializer_class = FollowSerializers
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("following__username",)
+    search_fields = ('following__username',)
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         """Функция для получения подписок пользователя, совершившего запрос."""
